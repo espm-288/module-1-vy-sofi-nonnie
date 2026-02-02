@@ -61,3 +61,20 @@ exio |>
 ```
 
 > **Task**: Construct a query to find the top 5 sectors in the US by CO2 emissions in 2022. Remember to check the column names in `exio` to find the appropriate emissions flow.
+
+```{r}
+# list all the stressors
+exio |>
+    filter(year == 2022, region == "US") |>
+    distinct(stressor) |>
+    collect()
+```
+
+```{r}
+exio |>
+    filter(year == 2022, region == "US", stressor == "CO2") |>
+    group_by(sector) |>
+    summarize(total_co2 = sum(value, na.rm = TRUE)) |>
+    arrange(desc(total_co2)) |>
+    head(5) |>
+    collect()
