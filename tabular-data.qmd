@@ -61,3 +61,188 @@ exio |>
 ```
 
 > **Task**: Construct a query to find the top 5 sectors in the US by CO2 emissions in 2022. Remember to check the column names in `exio` to find the appropriate emissions flow.
+```{r}
+# Find top 5 sectors in US by CO2 emissions in 2022
+exio |>
+    filter(year == 2022, 
+           matrix == "F_satellite",
+           region == "US",
+           str_detect(stressor, "(?i)CO2")) |>
+    group_by(sector) |>
+    summarise(total_co2 = sum(value, na.rm = TRUE)) |>
+    arrange(desc(total_co2)) |>
+    head(5) |>
+    collect()
+```
+
+## Exercise 3: Time Series Analysis
+
+> **Task**: Calculate the total CO2 emissions for China (CN) from 1995 to 2022 and identify which year had the highest emissions.
+
+```{r}
+# Your code here
+
+```
+
+## Exercise 4: Cross-Region Comparison
+
+> **Task**: Compare water consumption (look for "Water" in stressor names) across the US, China (CN), and Germany (DE) in 2022. Which country's sectors used the most water?
+
+```{r}
+# Your code here
+
+```
+
+## Exercise 5: Sector Deep Dive
+
+> **Task**: For the "Electricity by coal" sector, find all the different environmental stressors tracked in F_satellite and their total values for 2022 across all regions.
+
+```{r}
+# Your code here
+
+```
+
+## Exercise 6: Supply Chain Transactions
+
+> **Task**: Using the Z matrix (inter-industry transactions), find the top 5 sector-to-sector trade relationships by value in 2022. Look at which sectors are buying the most from other sectors.
+
+```{r}
+# Your code here
+
+```
+
+## Exercise 7: Final Demand Analysis
+
+> **Task**: Using the Y matrix (final demand), identify which final demand category (household consumption, government spending, etc.) contributes most to the US economy in 2022.
+
+```{r}
+# Your code here
+
+```
+
+## Exercise 8: Multi-Pollutant Profile
+
+> **Task**: For the US in 2022, create a summary showing the top 3 emitting sectors for each of these pollutants: CO2, CH4 (methane), and N2O (nitrous oxide). Use F_satellite matrix.
+
+```{r}
+# Your code here
+
+```
+
+## Exercise 9: Regional Aggregation
+
+> **Task**: Calculate the total economic output (sum of all Z matrix transactions) for each region in 2022. Which are the top 5 economic regions?
+
+```{r}
+# Your code here
+
+```
+
+## Exercise 10: Trend Detection
+
+> **Task**: Calculate the percentage change in total CO2 emissions for the US between 2000 and 2022. Has it increased or decreased?
+
+```{r}
+# Your code here
+
+```
+
+```{r}
+exio |> distinct(matrix) |> collect()
+```
+
+## Visualization: Top CO2 Emitting Industries
+
+```{r}
+library(ggplot2)
+
+# Get top 15 CO2 emitting sectors globally for 2022
+top_co2_sectors <- exio |>
+    filter(year == 2022,
+           matrix == "F_satellite",
+           str_detect(stressor, "(?i)CO2")) |>
+    group_by(sector) |>
+    summarise(total_co2 = sum(value, na.rm = TRUE)) |>
+    arrange(desc(total_co2)) |>
+    head(5) |>
+    collect()
+
+# Create bar graph
+ggplot(top_co2_sectors, aes(x = reorder(sector, total_co2), y = total_co2, fill = total_co2)) +
+    geom_col() +
+    coord_flip() +
+    scale_fill_gradient(low = "#56B4E9", high = "#D55E00") +
+    labs(title = "Top 5 CO2 Emitting Industries Globally (2022)",
+         x = "",
+         y = "Total CO2 Emissions") +
+    theme_minimal() +
+    theme(legend.position = "none",
+          axis.text.y = element_text(size = 20),
+          plot.title = element_text(size = 22))
+```
+
+#
+```{r}
+exio |> 
+    filter(matrix == "F_satellite", 
+           str_detect(sector, "(?i)coal.*electric|electric.*coal")) |> 
+    distinct(sector) |> 
+    collect()
+```
+
+```{r}
+options(repr.plot.width = 14, repr.plot.height = 4)
+
+# Get CO2 emissions by country over time (2000-2022)
+# Focus on top emitting countries for readability
+co2_trends <- exio |>
+    filter(year >= 2000, year <= 2022,
+           matrix == "F_satellite",
+           str_detect(stressor, "(?i)CO2")) |>
+    group_by(region, year) |>
+    summarise(total_co2 = sum(value, na.rm = TRUE), .groups = "drop") |>
+    collect()
+
+# Get top 10 countries by 2022 emissions
+top_countries <- co2_trends |>
+    filter(year == 2022) |>
+    arrange(desc(total_co2)) |>
+    head(10) |>
+    pull(region)
+
+# Filter for top countries only
+co2_trends_top <- co2_trends |>
+    filter(region %in% top_countries)
+
+# Create line plot
+p <- ggplot(co2_trends_top, aes(x = year, y = total_co2, color = region, group = region)) +
+    geom_line(linewidth = 1.2) +
+    geom_point(size = 2) +
+    scale_color_brewer(palette = "Set3") +
+    labs(title = "CO2 Emissions by Country (2000-2022)",
+         subtitle = "Top 10 emitting countries",
+         x = "Year",
+         y = "Total CO2 Emissions",
+         color = "Country") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 16, face = "bold"),
+          plot.subtitle = element_text(size = 12),
+          legend.position = "right")
+
+ggsave("co2_trends.png", p, width = 14, height = 4, dpi = 300)
+p  # Display the plot
+```
+
+
+
+```{r}
+library(png)
+img <- readPNG("plot.png")
+plot.new()
+rasterImage(img, 0, 0, 1, 1)
+```
+
+```{r}
+library(magick)
+image_read("plot.png")
+```
