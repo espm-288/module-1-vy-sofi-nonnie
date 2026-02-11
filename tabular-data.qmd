@@ -3,8 +3,6 @@ title: "Module 1: Tabular Data"
 subtitle: "Working with larger-than-RAM data using duckdbfs"
 author: "ESPM 288"
 format: html
-execute:
-  eval: false
 ---
 
 ## Introduction
@@ -233,18 +231,4 @@ p <- ggplot(co2_trends_top, aes(x = year, y = total_co2, color = region, group =
 
 ggsave("co2_trends.png", p, width = 14, height = 4, dpi = 300)
 p  # Display the plot
-```
-
-
-
-```{r}
-library(png)
-img <- readPNG("plot.png")
-plot.new()
-rasterImage(img, 0, 0, 1, 1)
-```
-
-```{r}
-library(magick)
-image_read("plot.png")
 ```
